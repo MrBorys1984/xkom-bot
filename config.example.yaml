@@ -1,0 +1,158 @@
+# ===== Źródła do monitorowania =====
+youtube:
+  enabled: true
+  channel: "https://www.youtube.com/@xkompl"
+  tabs: [videos, shorts]      # kody chowają się też w Shorts
+  poll_seconds: 20            # co ile sekund sprawdzamy kanał
+
+tiktok:
+  enabled: true               # działa BEZ logowania (yt-dlp)
+  handle: xkompl
+
+instagram:
+  enabled: false              # IG wymaga logowania (cookies z DRUGIEGO konta!)
+  handle: xkompl
+  cookies_file: "state/ig_cookies.txt"   # format Netscape (rozszerzenie "Get cookies.txt LOCALLY")
+  poll_seconds: 90            # rzadziej niż YT/TT — IG agresywnie limituje
+
+# ===== Pobieranie wideo =====
+download:
+  max_height: 720             # wystarczy do OCR, szybsze pobieranie
+
+# ===== Wyłapywanie kodów (OCR klatek) =====
+extract:
+  fps_short: 10               # filmy <= long_threshold_sec: klatek na sekundę do OCR
+  fps_long: 2                 # dłuższe filmy (rzadko tu kody, oszczędność czasu)
+  long_threshold_sec: 120
+  # pol — polskie słowa zachowują diakrytyki i NIE pasują do wzorca kodu,
+  # więc fałszywe pozytywy (SPRZET, UKRYWAMY...) odpadają automatycznie
+  ocr_lang: pol
+  # format kodów akcji (oficjalny): 6-8 znaków, wielkie litery + cyfry
+  # (np. A2C3E4L, 12345678) — patrz extract.py
+  # Słowa, których nie traktujemy jako kodów (druga linia obrony —
+  # słowa z diakrytykami odpadają już na poziomie ASCII)
+  stopwords:
+    - XKOM
+    - X-KOM
+    - XKOMPL
+    - XCOM
+    - XCOMPL
+    - KOD
+    - KODY
+    - KODU
+    - PRODUKT
+    - PRODUKTY
+    - ZABAWA
+    - MEDIA
+    - SOCIAL
+    - KANAL
+    - DETEKTYW
+    - DETEKTYWOW
+    - SUBSKRYBUJ
+    - SUBSKRYPCJA
+    - OBSERWUJ
+    - RABAT
+    - RABATOWY
+    - RABATOWE
+    - PROMOCJA
+    - PROMOCJE
+    - PROMO
+    - AKCJA
+    - ZLOTY
+    - ZŁOTY
+    - ZL
+    - JEDEN
+    - JEDNA
+    - JEDNEJ
+    - TYSIEC
+    - TYSIECY
+    - LAPTOPY
+    - LAPTOP
+    - KOMPUTER
+    - SLUCHAWKI
+    - SŁUCHAWKI
+    - SMARTWATCH
+    - RAM
+    - YOUTUBE
+    - INSTAGRAM
+    - FACEBOOK
+    - TIKTOK
+    - THREADS
+    - SUBSKRYBUJ
+    - SUBSKRYPCJA
+    - OBSERWUJ
+    - KANAL
+    - KANAŁ
+    - ZAPRASZAMY
+    - POWODZENIA
+    - DETEKTYWOW
+    - CODZIENNI
+    - TECH
+    - NEWS
+    - OKAZJA
+    - OKAZJE
+    - TANIO
+    - WYGRAJ
+    - KONKURS
+    - ZGAMIJ
+    - ZGARNIJ
+    - WPULI
+    - MEDIACH
+    - PRODUKTOW
+    - KTOPIERWSZY
+    - TENLEPSZY
+    - JUTRO
+    - DZIS
+    - CODZIEN
+    - ZNAJDZ
+    - LATACH
+    - PREMIERY
+    - REKORD
+    - GRACZY
+    - STEAMIE
+    - PREMIERZE
+    - WERSJI
+    - JEDNOCZE
+    - PONAD
+    - LICZBA
+    - MILIONA
+    - AKTYWNYCH
+    - SPRZEDA
+    - KOSMICZNE
+    - MILION
+    - KOPII
+    - GERALTA
+    - CZEKACIE
+    - DODATEK
+    - DAJCIE
+    - APLIKACJA
+    - MOBILNA
+    - GRUPA
+    - FACEBOOKU
+    - TWITTER
+    - THREADS
+    - INSTAGRAM
+    - WIEDZMIN
+    - WIEDZMIN3
+    - KANALE
+    - KANALU
+    - KANAL
+    - SUBSKRYPCJA
+    - KOMENTARZU
+    - KOMENTARZ
+    - PREMIERY
+    - OD
+    - PIERWSZY
+    - PAMIETAJ
+    - WSPOMNIE
+
+# ===== Powiadomienia (Telegram) =====
+telegram:
+  token: ""                   # TYLKO LOKALNIE — nigdy nie commituj do GitHuba!
+  chat_id: "1629064605"       # (chmura: sekrety repo TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)
+
+# ===== Sklep x-kom =====
+xkom:
+  cart_url: "https://www.x-kom.pl/koszyk.html"
+  browser_dir: "state/browser"
+  keep_open_after_apply_sec: 600   # po GO przeglądarka zostaje otwarta, żebyś dokończył zamówienie

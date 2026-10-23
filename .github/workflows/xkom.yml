@@ -1,0 +1,90 @@
+name: xkom-monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"   # co 5 minut (minimum, jakie GitHub obsługuje)
+  workflow_dispatch: {}
+
+concurrency:
+  group: xkom
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Domyślny token repo prywatnego ma tylko contents:read — dodajemy actions:read,
+    # bo stan pobieramy z artifactów poprzednich przebiegów (API + download-artifact).
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Zależności (ffmpeg, tesseract z polskim modelem)
+        run: |
+          if ! command -v tesseract >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-pol
+          fi
+          python -m pip install --quiet -r requirements.txt
+
+      - name: Znajdź przebieg z ostatnim stanem
+        id: prev
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          resp=$(curl -sS -w "%{http_code}" -o /tmp/art.json \
+                    -H "Authorization: Bearer $GH_TOKEN" \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=10")
+          [ "$resp" != "200" ] && head -c 300 /tmp/art.json && echo
+          id=$(jq -r --argjson cur "$GITHUB_RUN_ID" \
+                '[.artifacts[]? | select(.name=="xkom-state" and .workflow_run.id != $cur)]
+                 | sort_by(.created_at) | reverse | (.[0].workflow_run.id // empty)' \
+                /tmp/art.json)
+          echo "id=${id:-}" >> "$GITHUB_OUTPUT"
+          echo "Poprzedni run ze stanem: ${id:-brak — pierwszy start (seed z 'fresh')}"
+
+      - name: Pobierz stan (pliki z poprzedniego przebiegu)
+        if: steps.prev.outputs.id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: xkom-state
+          path: state
+          run-id: ${{ steps.prev.outputs.id }}
+          github-token: ${{ github.token }}
+
+      - name: Cookies Instagram (opcjonalne, sekret IG_COOKIES)
+        if: ${{ secrets.IG_COOKIES != '' }}
+        run: |
+          mkdir -p state
+          echo "${{ secrets.IG_COOKIES }}" | base64 -d > state/ig_cookies.txt
+
+      - name: Uruchom cykl monitorowania
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          XKOM_STATE_DIR: state
+        run: python -m xkom.cloud_cycle
+
+      - name: Zapisz stan do następnego przebiegu
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: xkom-state
+          path: |
+            state/yt_seen.json
+            state/tt_seen.json
+            state/tt_seen_cadence.json
+            state/ig_seen.json
+            state/bw_state.json
+            state/alerted_codes.json
+            state/candidates.json
+            state/prices.json
+          retention-days: 90

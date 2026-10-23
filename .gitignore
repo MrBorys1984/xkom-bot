@@ -1,0 +1,5 @@
+# sekrety i lokalny stan — NIGDY do GitHuba
+config.yaml
+state/
+__pycache__/
+*.pyc

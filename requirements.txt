@@ -1,0 +1,5 @@
+yt-dlp
+playwright
+requests
+PyYAML
+Pillow
