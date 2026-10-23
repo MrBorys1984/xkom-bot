@@ -12,7 +12,7 @@ concurrency:
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25   # margines na pobieranie wideo + OCR przy nowych filmach
     # Domyślny token repo prywatnego ma tylko contents:read — dodajemy actions:read,
     # bo stan pobieramy z artifactów poprzednich przebiegów (API + download-artifact).
     permissions:
@@ -28,10 +28,11 @@ jobs:
       - name: Zależności (ffmpeg, tesseract z polskim modelem)
         run: |
           if ! command -v tesseract >/dev/null 2>&1; then
-            sudo apt-get update -qq
+            # timeouty sieciowe — raz runner zawiesił się 15 min na apt/pip
+            sudo apt-get update -qq -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
             sudo apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-pol
           fi
-          python -m pip install --quiet -r requirements.txt
+          python -m pip install --quiet --timeout 60 --retries 2 -r requirements.txt
 
       - name: Znajdź przebieg z ostatnim stanem
         id: prev
