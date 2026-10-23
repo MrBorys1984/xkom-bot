@@ -138,6 +138,63 @@ Launchd NIE budzi Maca ze snu — w dni, w których możesz wypaść kod
 **Ustawienia systemowe > Bateria > Opcje... > „Zapobiegaj automatycznemu
 uśpieniu Maca, gdy wyświetlacz jest wyłączony”** (albo App Amphetamine).
 
+## Chmura 24/7 (GitHub Actions)
+
+Monitoring działa w chmurze GitHub — **nawet gdy Mac jest wyłączony**
+(ten sam schemat co projekt `flightwatch`):
+
+- Repo: `github.com/MrBorys1984/xkom-bot` (publiczne — warunek nielimitowanych
+  minut Actions; w kodzie **nie ma żadnych sekretów**, `config.yaml` jest
+  w `.gitignore`)
+- Cron: **co 5 minut** (`*/5 * * * *`), przebieg trwa ~2–4 min
+- Stan (8 plików JSON) jest trzymany w **artifactach** `xkom-state`
+  (retencja 90 dni) — dokładnie jak w flightwatch
+- Alerty lądują prosto w Twoim Telegramie (sekrety `TELEGRAM_BOT_TOKEN`,
+  `TELEGRAM_CHAT_ID` — już ustawione)
+- **Zakupu chmura NIE finalizuje** — to nadal robisz lokalnie
+  (`xkom.buy` / `xkom.go` z Twoim profilem przeglądarki)
+
+### Sekrety cookies (wymagane dla pełnej pracy chmury!)
+
+IP datacenter GitHuba jest blokowany inaczej niż Twój domowy:
+
+| Źródło | W chmurze bez cookies | Z cookies |
+|---|---|---|
+| YouTube (RSS) | ✅ działa | ✅ |
+| YouTube (opisy + wideo/OCR) | ❌ „Sign in to confirm you're not a bot" | ✅ działa |
+| TikTok | ❌ twarda blokada (404) — nie da się obejść | — |
+| x-kom (kalendarz/ceny) | ❌ 403 (alerty bez ceny) | — |
+| Instagram | ❌ wyłączony | ✅ działa |
+
+**YT_COOKIES — KONIECZNE** (bez nich chmura wykryje nowy film z RSS,
+ale nie odczyta opisu i nie zrobi OCR):
+
+1. Wejdź na [getcookiestext.org](https://getcookiestext.org) (rozszerzenie Chrome)
+   i zaloguj się na **drugie** konto Google w nowym oknie.
+2. Z youtube.com kliknij „Get cookies.txt LOCALLY” → zapisz plik.
+3. W terminalu:
+   ```bash
+   base64 -i plik_cookies.txt | pbcopy
+   gh secret set YT_COOKIES --repo MrBorys1984/xkom-bot --body "$(pbpaste)"
+   ```
+
+**IG_COOKIES — opcjonalne** (analogicznie, z drugiego konta IG):
+```bash
+base64 -i ig_cookies.txt | pbcopy
+gh secret set IG_COOKIES --repo MrBorys1984/xkom-bot --body "$(pbpaste)"
+```
+
+Po ustawieniu sekretu ręcznie wypróbuj przebieg:
+`gh workflow run xkom.yml --repo MrBorys1984/xkom-bot`
+(logi: zakładka Actions).
+
+### Lokalne vs chmura
+
+- Jeśli działa **i** lokalny bot (launchd) **i** chmura, alerty mogą się
+  dublować (każdy ma własny stan). Gdy chmura działa z cookies — wyłącz
+  lokalny: `./uninstall_launchd.sh` (albo `./stop.sh`).
+- Mac zostaje potrzebny tylko do finalizacji zakupu.
+
 ## Źródła i 1:1 (YT vs IG)
 - **YouTube + TikTok**: pełne monitorowanie BEZ logowania (yt-dlp). TikTok działa
   anonimowo i jest włączony domyślnie.
