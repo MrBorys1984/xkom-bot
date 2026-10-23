@@ -283,18 +283,21 @@ def extract_codes(item, video_path, cfg):
         prom = cl["prominent"]
         has_kod = cl["kod_ctx"] > 0
         is_digits = root.isdigit()
-        # akceptujemy (kod = DUŻA stabilna czcionka, ew. z kontekstem 'kod'):
-        #  strict: prominent >=2  LUB  (prominent >=1 i kontekst 'kod')
-        #  loose:  powtórzenie >=6 i prominent >=1 (mały kod ukryty na dłużej)
-        #  same cyfry: dodatkowo wymagany prominent LUB kontekst 'kod'
-        #    (czyste cyfry bywają cenami/datami)
-        if is_digits:
-            ok = (prom >= 2) or (prom >= 1 and has_kod)
-            level = "strict" if ok else None
+        # STRICT WYMAGA: kontekst 'kod' na klatce + DUŻA czcionka (prom>=1).
+        # Bez tego fałszywe alerty to nazwy marek (STEAM, MOTOROLA, UGREEN...)
+        # albo zwykłe słowa z klatki, na której przypadkiem jest napis 'kod'.
+        #  bez kontekstu: max 'loose' (logi + status, NIE alarmuje w Telegramie)
+        #  cyfry z kontekstem: cena też bywa duża — wymagamy stabilności (>=3 klatki)
+        #  litery z kontekstem: strict tylko gdy DUŻE (prom>=1);
+        #    małe/stabilne bez prominentu to max 'loose'
+        if not has_kod:
+            level = "loose" if (rep >= 6 and prom >= 1) else None
+        elif is_digits:
+            level = "strict" if (prom >= 1 and rep >= 3) else "loose"
         else:
-            if prom >= 2 or (prom >= 1 and has_kod):
+            if prom >= 1:
                 level = "strict"
-            elif rep >= 6 and prom >= 1:
+            elif rep >= 2:
                 level = "loose"
             else:
                 level = None

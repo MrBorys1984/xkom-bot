@@ -151,14 +151,17 @@ def poll_youtube(cfg, state_name="yt_seen"):
             new_items.append(it)
         log(f"[youtube/RSS] {len(items)} pozycji, nowych: {len(new_items)}")
     else:
+        # Fallback (np. chwilowy błąd RSS): JEDNOLITE klucze 'youtube:{id}'
+        # jak w RSS — inaczej każdy film wyglądałby na "nowy" (burza alertów).
+        # Limit 15 zamiast 40 — i tak kodów szukamy w najnowszych.
         for tab in y.get("tabs", ["videos", "shorts"]):
             try:
-                tab_items = _yt_videos(y["channel"], tab)
+                tab_items = _yt_videos(y["channel"], tab, limit=15)
             except Exception as e:
                 log(f"[youtube/{tab}] błąd: {e}")
                 continue
             for it in tab_items:
-                key = f"youtube/{tab}:{it['id']}"
+                key = f"youtube:{it['id']}"
                 if key in seen:
                     continue
                 seen[key] = now

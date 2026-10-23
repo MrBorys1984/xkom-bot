@@ -47,6 +47,21 @@ extract:
     - MEDIA
     - SOCIAL
     - KANAL
+    # słowa promocyjne — bywają DUŻE na klatkach z kodem, ale to nie kody
+    - RABATOWY
+    - RABATOWE
+    - RABATOWA
+    - PROMOCJA
+    - PROMOCYJ
+    - OKAZJA
+    - ZAKUP
+    - ZAKUPEM
+    - ZAKUPU
+    - KUPUJESZ
+    - SZUKAJESZ
+    - WYGRYWAJ
+    - WYGRYWASZ
+    - WYGRAJ
     - DETEKTYW
     - DETEKTYWOW
     - SUBSKRYBUJ
@@ -149,7 +164,7 @@ extract:
 
 # ===== Powiadomienia (Telegram) =====
 telegram:
-  token: ""                   # TYLKO LOKALNIE — nigdy nie commituj do GitHuba!
+  token: ""                   # TYLKO LOKALNIE — plik jest w .gitignore; chmura używa sekretów GH
   chat_id: "1629064605"       # (chmura: sekrety repo TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)
 
 # ===== Sklep x-kom =====
