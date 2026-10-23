@@ -96,7 +96,11 @@ def download_video(item, cfg):
     if out.exists():
         return out
     maxh = (cfg.get("download") or {}).get("max_height", 720)
-    base = ["yt-dlp", "-f", f"bv*[height<={maxh}]+ba/b[height<={maxh}]/b",
+    # Selektor z OSTATECZNYM fallbackiem "bv*+ba/b" — na IP datacenter YouTube
+    # bywa zaniżony (np. tylko 360p), więc twardy limit wysokości potrafi
+    # nie trafić w żaden dostępny format. OCR radzi sobie z 360p.
+    base = ["yt-dlp",
+            "-f", f"bv*[height<={maxh}]+ba/b[height<={maxh}]/bv*+ba/b",
             "--merge-output-format", "mp4", "-o", str(out), "--no-warnings",
             *_yt_cookies_args()]
     last_err = ""

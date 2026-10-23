@@ -32,6 +32,14 @@ jobs:
             sudo apt-get update -qq -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30
             sudo apt-get install -y -qq ffmpeg tesseract-ocr tesseract-ocr-pol
           fi
+          # deno — yt-dlp WYMAGA runtime JS od konca 2025 (solving JS challenges).
+          # Bez niego na IP datacenter YouTube zwraca pustą liste formatow
+          # ("Requested format is not available").
+          if ! command -v deno >/dev/null 2>&1; then
+            curl -fsSL https://deno.land/install.sh | sh
+            echo "$HOME/.deno/bin" >> "$GITHUB_PATH"
+          fi
+          deno --version | head -1
           python -m pip install --quiet --timeout 60 --retries 2 -r requirements.txt
 
       - name: Znajdź przebieg z ostatnim stanem
