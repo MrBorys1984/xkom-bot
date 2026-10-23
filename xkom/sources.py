@@ -66,6 +66,20 @@ def _yt_cookies_args():
     return ["--cookies", str(p)] if p else []
 
 
+def _yt_clients():
+    """Łańcuch klientów odtwarzacza YouTube — fallback na IP datacenter.
+
+    Z serwerów (GitHub Actions) domyślny klient często dostaje 'Sign in to
+    confirm you're not a bot', nawet z cookies nowego konta. Klienci
+    'tv' (Smart TV) i 'web_embedded' zazwyczaj przechodzą bez problemu.
+    """
+    return [
+        [],
+        ["--extractor-args", "youtube:player_client=tv"],
+        ["--extractor-args", "youtube:player_client=web_embedded"],
+    ]
+
+
 def _yt_videos(url, tab, limit=40):
     """Fallback: lista z taba kanału przez yt-dlp (flat)."""
     cmd = [
@@ -266,15 +280,21 @@ def poll_tiktok(cfg, state_name="tt_seen", min_interval_sec=180):
 
 
 def get_description(url):
-    """Szybki opis wideo (kody bywają w opisie!). Zwraca tekst."""
-    try:
-        r = _run(["yt-dlp", "-J", "--no-warnings", "--no-playlist",
-                  *_yt_cookies_args(), url], timeout=90)
+    """Szybki opis wideo (kody bywają w opisie!). Zwraca tekst.
+
+    Próbuje kolejno klientów z _yt_clients() (datacenter IP).
+    """
+    base = ["yt-dlp", "-J", "--no-warnings", "--no-playlist", *_yt_cookies_args()]
+    for extra in _yt_clients():
+        try:
+            r = _run(base + extra + [url], timeout=90)
+        except Exception:
+            continue
         if r.returncode == 0:
             data = json_loads(r.stdout)
-            return data.get("description") or ""
-    except Exception:
-        pass
+            desc = data.get("description") or ""
+            if desc:
+                return desc
     return ""
 
 

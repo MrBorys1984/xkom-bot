@@ -84,22 +84,38 @@ def scan_text(text, stopwords):
 
 
 def download_video(item, cfg):
-    """Pobiera wideo (max 720p) przez yt-dlp. Zwraca ścieżkę."""
-    from .sources import _yt_cookies_args
+    """Pobiera wideo (max 720p) przez yt-dlp. Zwraca ścieżkę.
+
+    Próbuje kolejno klientów z _yt_clients() — domyślny bywa blokowany
+    na IP datacenter ('Sign in to confirm you're not a bot'), a 'tv'
+    lub 'web_embedded' przechodzą.
+    """
+    from .sources import _yt_cookies_args, _yt_clients
     vid = item["id"]
     out = VIDEO_DIR / f"{vid}.mp4"
     if out.exists():
         return out
     maxh = (cfg.get("download") or {}).get("max_height", 720)
-    cmd = ["yt-dlp", "-f", f"bv*[height<={maxh}]+ba/b[height<={maxh}]/b",
-           "--merge-output-format", "mp4", "-o", str(out), "--no-warnings",
-           *_yt_cookies_args(), item["url"]]
-    t0 = time.time()
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-    if r.returncode != 0:
-        raise RuntimeError(f"download failed: {r.stderr[-300:]}")
-    log(f"pobrane: {vid} w {time.time()-t0:.0f}s")
-    return out
+    base = ["yt-dlp", "-f", f"bv*[height<={maxh}]+ba/b[height<={maxh}]/b",
+            "--merge-output-format", "mp4", "-o", str(out), "--no-warnings",
+            *_yt_cookies_args()]
+    last_err = ""
+    for extra in _yt_clients():
+        t0 = time.time()
+        r = subprocess.run(base + extra + [item["url"]],
+                           capture_output=True, text=True, timeout=600)
+        if r.returncode == 0 and out.exists():
+            tag = extra[-1] if extra else "default"
+            log(f"pobrane: {vid} w {time.time()-t0:.0f}s (klient: {tag})")
+            return out
+        last_err = r.stderr[-300:]
+        log(f"[download] klient {extra[-1] if extra else 'default'} nie zadziałał: {last_err[:120]}")
+        for p in [out, *(VIDEO_DIR.glob(f"{vid}.*"))]:
+            try:
+                p.unlink()
+            except OSError:
+                pass
+    raise RuntimeError(f"download failed (wszyscy klienci): {last_err}")
 
 
 def probe_duration(video_path):
