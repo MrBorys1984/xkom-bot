@@ -85,6 +85,7 @@ def scan_text(text, stopwords):
 
 def download_video(item, cfg):
     """Pobiera wideo (max 720p) przez yt-dlp. Zwraca ścieżkę."""
+    from .sources import _yt_cookies_args
     vid = item["id"]
     out = VIDEO_DIR / f"{vid}.mp4"
     if out.exists():
@@ -92,7 +93,7 @@ def download_video(item, cfg):
     maxh = (cfg.get("download") or {}).get("max_height", 720)
     cmd = ["yt-dlp", "-f", f"bv*[height<={maxh}]+ba/b[height<={maxh}]/b",
            "--merge-output-format", "mp4", "-o", str(out), "--no-warnings",
-           item["url"]]
+           *_yt_cookies_args(), item["url"]]
     t0 = time.time()
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if r.returncode != 0:
@@ -173,10 +174,11 @@ def extract_codes(item, video_path, cfg):
     log(f"OCR {item['id']}: {dur:.0f}s @ {fps} fps")
 
     t0 = time.time()
+    max_frames = ex.get("max_frames", 300)
     frames = []
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error",
                         "-i", str(video_path), "-vf", f"fps={fps}",
-                        "-frames:v", "600", "-q:v", "2",
+                        "-frames:v", str(max_frames), "-q:v", "2",
                         str(SHOTS_DIR / f"{item['id']}_%03d.jpg")],
                        capture_output=True, text=True, timeout=600)
     if r.returncode == 0:

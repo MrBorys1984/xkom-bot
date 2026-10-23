@@ -24,6 +24,7 @@ extract:
   fps_short: 10               # filmy <= long_threshold_sec: klatek na sekundę do OCR
   fps_long: 2                 # dłuższe filmy (rzadko tu kody, oszczędność czasu)
   long_threshold_sec: 120
+  max_frames: 300             # limit klatek na wideo (oszczędność czasu w chmurze)
   # pol — polskie słowa zachowują diakrytyki i NIE pasują do wzorca kodu,
   # więc fałszywe pozytywy (SPRZET, UKRYWAMY...) odpadają automatycznie
   ocr_lang: pol

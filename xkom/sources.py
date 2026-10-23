@@ -11,6 +11,18 @@ def _run(cmd, timeout=180):
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def _yt_cookies():
+    """Ścieżka do cookies YouTube (state/yt_cookies.txt), jeśli istnieje.
+
+    W chmurze (GitHub Actions, IP datacenter) YouTube wymaga logowania —
+    cookies z DRUGIEGO konta Google rozwiązują 'Sign in to confirm you're
+    not a bot'. Lokalnie (IP domowe) zwykle nie są potrzebne.
+    """
+    from .common import STATE
+    p = STATE / "yt_cookies.txt"
+    return p if p.exists() else None
+
+
 # ---------------- YouTube ----------------
 
 import urllib.request
@@ -49,11 +61,17 @@ def _yt_rss(limit=15):
     return items[:limit]
 
 
+def _yt_cookies_args():
+    p = _yt_cookies()
+    return ["--cookies", str(p)] if p else []
+
+
 def _yt_videos(url, tab, limit=40):
     """Fallback: lista z taba kanału przez yt-dlp (flat)."""
     cmd = [
         "yt-dlp", "--flat-playlist", "-J", "--no-warnings",
         f"--playlist-items=1-{limit}",
+        *_yt_cookies_args(),
         f"{url}/shorts" if tab == "shorts" else f"{url}/videos",
     ]
     r = None
@@ -250,7 +268,8 @@ def poll_tiktok(cfg, state_name="tt_seen", min_interval_sec=180):
 def get_description(url):
     """Szybki opis wideo (kody bywają w opisie!). Zwraca tekst."""
     try:
-        r = _run(["yt-dlp", "-J", "--no-warnings", "--no-playlist", url], timeout=90)
+        r = _run(["yt-dlp", "-J", "--no-warnings", "--no-playlist",
+                  *_yt_cookies_args(), url], timeout=90)
         if r.returncode == 0:
             data = json_loads(r.stdout)
             return data.get("description") or ""

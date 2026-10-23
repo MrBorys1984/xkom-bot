@@ -60,12 +60,21 @@ jobs:
           run-id: ${{ steps.prev.outputs.id }}
           github-token: ${{ github.token }}
 
-      - name: Cookies Instagram (opcjonalne, sekret IG_COOKIES)
+      - name: Cookies (opcjonalne: YT_COOKIES, IG_COOKIES)
         # 'secrets' nie działa w warunku 'if' — sprawdzamy w shellu
         env:
+          YT_COOKIES: ${{ secrets.YT_COOKIES }}
           IG_COOKIES: ${{ secrets.IG_COOKIES }}
         run: |
           mkdir -p state
+          # YouTube: w chmurze (IP datacenter) WYMAGANE, inaczej "Sign in to
+          # confirm you're not a bot" przy pobieraniu wideo i opisów.
+          if [ -n "$YT_COOKIES" ]; then
+            echo "$YT_COOKIES" | base64 -d > state/yt_cookies.txt
+            echo "Cookies YouTube załadowane."
+          else
+            echo "Brak sekretu YT_COOKIES — pobieranie wideo może nie działać w chmurze."
+          fi
           if [ -n "$IG_COOKIES" ]; then
             echo "$IG_COOKIES" | base64 -d > state/ig_cookies.txt
             echo "Cookies IG załadowane."

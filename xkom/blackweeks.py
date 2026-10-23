@@ -16,7 +16,16 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 
 
 def _fetch(url=BW_URL):
-    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    # pełne nagłówki przeglądarki — niektóre CDNs blokują nagie requesty
+    headers = {
+        "User-Agent": UA,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,"
+                  "image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "pl-PL,pl;q=0.9,en;q=0.8",
+        "Referer": "https://www.x-kom.pl/promocje",
+        "Upgrade-Insecure-Requests": "1",
+    }
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read().decode("utf-8", errors="replace")
 
