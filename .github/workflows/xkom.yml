@@ -60,7 +60,7 @@ jobs:
           run-id: ${{ steps.prev.outputs.id }}
           github-token: ${{ github.token }}
 
-      - name: Cookies (opcjonalne: YT_COOKIES, IG_COOKIES)
+      - name: "Cookies (opcjonalne: YT_COOKIES, IG_COOKIES)"
         # 'secrets' nie działa w warunku 'if' — sprawdzamy w shellu
         env:
           YT_COOKIES: ${{ secrets.YT_COOKIES }}
