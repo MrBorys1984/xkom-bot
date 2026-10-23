@@ -72,6 +72,8 @@ jobs:
           # confirm you're not a bot" przy pobieraniu wideo i opisów.
           if [ -n "$YT_COOKIES" ]; then
             echo "$YT_COOKIES" | base64 -d > state/yt_cookies.txt
+            # debug: czy plik rozpakował się poprawnie (linie + checksum)
+            wc -l state/yt_cookies.txt && md5sum state/yt_cookies.txt
             echo "Cookies YouTube załadowane."
           else
             echo "Brak sekretu YT_COOKIES — pobieranie wideo może nie działać w chmurze."

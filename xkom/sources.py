@@ -77,6 +77,8 @@ def _yt_clients():
         [],
         ["--extractor-args", "youtube:player_client=tv"],
         ["--extractor-args", "youtube:player_client=web_embedded"],
+        ["--extractor-args", "youtube:player_client=ios"],
+        ["--extractor-args", "youtube:player_client=android_vr"],
     ]
 
 
