@@ -61,10 +61,17 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Cookies Instagram (opcjonalne, sekret IG_COOKIES)
-        if: ${{ secrets.IG_COOKIES != '' }}
+        # 'secrets' nie działa w warunku 'if' — sprawdzamy w shellu
+        env:
+          IG_COOKIES: ${{ secrets.IG_COOKIES }}
         run: |
           mkdir -p state
-          echo "${{ secrets.IG_COOKIES }}" | base64 -d > state/ig_cookies.txt
+          if [ -n "$IG_COOKIES" ]; then
+            echo "$IG_COOKIES" | base64 -d > state/ig_cookies.txt
+            echo "Cookies IG załadowane."
+          else
+            echo "Brak sekretu IG_COOKIES — Instagram wyłączony."
+          fi
 
       - name: Uruchom cykl monitorowania
         env:
